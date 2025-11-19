@@ -265,3 +265,16 @@
   }
 }
 
+.qr-code-area {
+    margin: 20px 30px;
+    border: 1px dashed #ccc;
+    padding: 30px;
+    display: flex;
+    justify-content: center; 
+    align-items: center;  
+    flex-direction: column; 
+}
+
+.qr-code-area qrcode{
+    margin-top: 50px;
+}
