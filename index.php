@@ -5,6 +5,7 @@ session_start();
 <html lang="en">
 
 <head>
+    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chè Anh Em Cây Khế</title>
@@ -16,6 +17,10 @@ session_start();
     <link href="assets/css/main.css?v=<?php echo time(); ?>" rel="stylesheet">
 
     <link rel="stylesheet" href="assets/css/login.css">
+
+    <link rel="stylesheet" href="assets/js/login.js">
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 
     <link rel="stylesheet" href="fonts/material-design-iconic-font/css/material-design-iconic-font.min.css">
 
@@ -146,10 +151,87 @@ session_start();
     </script>
 
     <script src="assets/js/cart.js"></script>
-
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+     <script src="assets/js/login.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
         crossorigin="anonymous"></script>
+    
+    <?php
+// Kiểm tra nếu có cờ hiệu đăng nhập thành công
+if (isset($_SESSION['show_login_success']) && $_SESSION['show_login_success'] === true) {
+    
+    // Lấy tên người dùng để hiển thị cho thân thiện
+    $welcome_name = isset($_SESSION['fullname']) ? $_SESSION['fullname'] : 'Bạn';
+    
+    echo "<script>
+        document.addEventListener('DOMContentLoaded', function() {
+            Swal.fire({
+                title: 'Đăng nhập Thành Công!',
+                text: 'Chào mừng " . htmlspecialchars($welcome_name) . " đã tới quán chè của chúng tôi ',
+                icon: 'success',
+                confirmButtonText: 'OK',
+                confirmButtonColor: '#3085d6',
+                
+                timerProgressBar: true
+            });
+        });
+    </script>";
+
+    // Quan trọng: Xóa cờ hiệu ngay lập tức để không hiện lại khi F5 trang
+    unset($_SESSION['show_login_success']);
+}
+?>
+
+<?php
+session_start();
+?>
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
+
+    <?php
+    // --- LOGIC ĐIỀU HƯỚNG TRANG ---
+    if (isset($_GET['page'])) {
+        $page = $_GET['page'];
+        
+        if ($page == 'dangnhap') {
+            include 'pages/login_form.php'; // Gọi file login_form.php của bạn ra
+        } elseif ($page == 'dangki') {
+            include 'pages/register_form.php';
+        } 
+        // ... các trang khác
+    } else {
+        include 'pages/home.php'; // Trang chủ mặc định
+    }
+    ?>
+
+    <?php
+    // 1. Kiểm tra cờ ĐĂNG KÝ thành công
+    if (isset($_SESSION['show_register_success']) && $_SESSION['show_register_success'] === true) {
+        echo "<script>
+            document.addEventListener('DOMContentLoaded', function() {
+                Swal.fire({
+                    title: 'Đăng Ký Thành Công!',
+                    text: 'Tài khoản đã được tạo. Vui lòng đăng nhập.',
+                    icon: 'success',
+                    confirmButtonText: 'OK',
+                    confirmButtonColor: '#3085d6',
+                    timerProgressBar: true
+                });
+            });
+        </script>";
+        unset($_SESSION['show_register_success']); // Xóa cờ ngay
+    }
+
+    
+    ?>
+
+</body>
+</html>
         
 </body>
 

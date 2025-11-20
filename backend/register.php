@@ -63,23 +63,20 @@ if (isset($_POST['btn-reg'])) {
     // --- XỬ LÝ THÀNH CÔNG ---
     
     $hashed_password = password_hash($password, PASSWORD_DEFAULT);
-
     $sql = "INSERT INTO user (USERNAME, PASSWORD, FULLNAME) VALUES (?, ?, ?)";
-    
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("sss", $username, $hashed_password, $fullname);
 
     if ($stmt->execute()) {
-        // Lưu thông báo thành công
-        $_SESSION['success'] = "Đăng ký thành công! Bạn có thể tiếp tục đăng ký hoặc quay lại Đăng nhập.";
-        // 🎯 THAY ĐỔI ĐỂ Ở LẠI TRANG ĐĂNG KÝ 🎯
-        header('Location: ../index.php?page=dangki'); 
+        // 1. Đặt cờ hiệu: "Vừa đăng ký xong, hãy hiện thông báo nhé"
+        $_SESSION['show_register_success'] = true;
+        
+        // 2. Chuyển hướng về trang Login
+        // Giả sử trong index.php bạn quy định page=dangnhap sẽ gọi file login_form.php
+        header('Location: ../index.php?page=dangnhap'); 
         exit;
     } else {
         redirectToRegister('Có lỗi xảy ra khi lưu dữ liệu: ' . $stmt->error);
     }
-
-    $stmt->close();
-    $conn->close();
 }
 ?>
