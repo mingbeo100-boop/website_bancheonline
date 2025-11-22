@@ -54,7 +54,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const selected = Array.from(checkboxes).filter(cb => cb.checked);
 
     if (selected.length === 0) {
-      alert('⚠️ Vui lòng chọn ít nhất một sản phẩm!');
       // ⚡ THAY THẾ ALERT() BẰNG SWEETALERT2
       Swal.fire({
         title: 'Lỗi',
@@ -75,8 +74,7 @@ document.addEventListener('DOMContentLoaded', () => {
       addToCart(name, price, imgSrc);
     });
 
-    alert('✅ Đã thêm các món đã chọn vào giỏ hàng!');
-    // ⚡ THAY THẾ ALERT() BẰNG SWEETALERT2 (Thông báo thành công tổng)
+    // ⚡ BỎ ALERT() DƯ THỪA VÀ CHỈ DÙNG SWEETALERT2
     Swal.fire({
       title: 'Hoàn Tất!',
       text: `Đã thêm ${selected.length} món đã chọn vào giỏ hàng!`,

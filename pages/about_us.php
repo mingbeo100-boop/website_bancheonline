@@ -120,11 +120,6 @@
 
    <div class="founders">
      <div class="founder">
-       <img src="assets/images/review_form/quan.jpg" alt="Nguyễn Minh Quân" />
-       <h4>Nguyễn Minh Quân</h4>
-       <p>C.E.O CMO</p>
-     </div>
-     <div class="founder">
        <img src="assets/images/review_form/long.jpg" alt="Trần Nhật Long" />
        <h4>Trần Nhật Long</h4>
        <p>C.E.O</p>
@@ -133,11 +128,6 @@
        <img src="assets/images/review_form/minh.jpg" alt="Nguyễn Nhật Minh" />
        <h4>Nguyễn Nhật Minh</h4>
        <p>C.E.O FOUNDER</p>
-     </div>
-     <div class="founder">
-       <img src="assets/images/review_form/quy.jpg" alt="Hoàng Dương Thanh Quý" />
-       <h4>Hoàng Dương Thanh Quý</h4>
-       <p>C.E.O MANAGER</p>
      </div>
    </div>
 

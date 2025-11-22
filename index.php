@@ -91,17 +91,17 @@ session_start(); // LUÔN LUÔN là dòng đầu tiên trong file PHP nếu bạ
                 <p class="footer-thank">Cảm ơn bạn đã đến với<br><strong>Chè Anh Em Cây Khế</strong></p>
             </div>
 
-            <div class="footer-right">
-                <p class="footer-contact-title">Liên hệ với chúng tôi</p>
-                <div class="footer-socials">
-                    <a href="#" aria-label="Facebook">
-                        <img src="./assets/images/facebook.png" alt="Facebook">
-                    </a>
-                    <a href="#" aria-label="Instagram">
-                        <img src="./assets/images/instagram.png" alt="Instagram" class="ig-small">
-                    </a>
-                </div>
-
+           <div class="footer-right">
+    <p class="footer-contact-title">Liên hệ với chúng tôi</p>
+    <div class="footer-socials">
+        <a href="https://www.facebook.com/minhbiker2006" aria-label="Facebook" target="_blank">
+            <img src="./assets/images/facebook.png" alt="Facebook">
+        </a>
+        <a href="https://www.instagram.com/nhatlong.tran.3979/" aria-label="Instagram" target="_blank">
+            <img src="./assets/images/instagram.png" alt="Instagram" class="ig-small">
+        </a>
+    </div>
+</div>
                 <?php if (!isset($_SESSION['fullname'])): ?>
                     <button class="login-btn" onclick="window.location.href='index.php?page=dangnhap'">ĐĂNG NHẬP</button>
                 <?php endif; ?>
