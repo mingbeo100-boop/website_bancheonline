@@ -143,7 +143,7 @@
             <input type="text" name="name" placeholder="Your Name" required>
 
             <label for="rating">Đánh giá:</label>
-            <select name="rating" id="rating" style="cursor: pointer;" required>
+            <select name="rating" id="rating" required>
                 <option value="">Mức độ hài lòng</option>
                 <option value="5">⭐⭐⭐⭐⭐</option>
                 <option value="4">⭐⭐⭐⭐</option>

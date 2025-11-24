@@ -140,7 +140,7 @@
        <p>C.E.O MANAGER</p>
      </div>
      <div class="founder">
-       <img src="assets/images/review_form/chidat.jpg" alt="Hoàng Dương Thanh Quý" />
+       <img src="assets/images/review_form/" alt="Hoàng Dương Thanh Quý" />
        <h4>Nguyễn Chí Đạt</h4>
        <p>C.E.O CTO</p>
      </div>

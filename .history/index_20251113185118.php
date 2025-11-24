@@ -96,10 +96,10 @@
             <div class="footer-right">
                 <p class="footer-contact-title">Liên hệ với chúng tôi</p>
                 <div class="footer-socials">
-                    <a target="_blank" href="https://www.facebook.com/minhbiker2006" aria-label="Facebook">
+                    <a href="https://www.facebook.com/minhbiker2006" aria-label="Facebook">
                         <img src="./assets/images/facebook.png" alt="Facebook">
                     </a>
-                    <a target="_blank" href="https://www.instagram.com/minhbiker123" aria-label="Instagram">
+                    <a href="https://www.instagram.com/minhbiker123" aria-label="Instagram">
                         <img src="./assets/images/instagram.png" alt="Instagram" class="ig-small">
                     </a>
                 </div>
@@ -109,11 +109,11 @@
 
         <div class="footer-bottom">
             <nav class="footer-nav">
-                <a href="index.php?page=about_us">VỀ CHÚNG TÔI</a>
-                <a href="index.php?page=menu">MENU</a>
-                <a href="index.php?page=hethongcuahang">CỬA HÀNG</a>
+                <a href="#">VỀ CHÚNG TÔI</a>
+                <a href="#">MENU</a>
+                <a href="#">CỬA HÀNG</a>
                 <a href="#">TIN TỨC</a>
-                <a target="_blank" href="https://www.facebook.com/minhbiker2006">LIÊN HỆ VỚI CHÚNG TÔI!</a>
+                <a href="#">LIÊN HỆ VỚI CHÚNG TÔI!</a>
             </nav>
             <p class="footer-copy">
                 Copyright © 2025 Chè Anh Em Cây Khế | Được phát triển bởi
