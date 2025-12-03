@@ -144,27 +144,84 @@ function handle_cart_action($conn, $user_id, $cart_id, $action) {
             
         // --- HOÀN TẤT THANH TOÁN (Xóa toàn bộ giỏ hàng) ---
         case 'checkout_complete':
-            $conn->begin_transaction();
-            try {
-                // Xóa tất cả items trong giỏ hàng hiện tại dựa trên cart_id
-                $stmt_delete = $conn->prepare("DELETE FROM cart_items WHERE cart_id = ?");
-                if ($stmt_delete === false) throw new Exception("Lỗi chuẩn bị xóa giỏ hàng.");
-                
-                $stmt_delete->bind_param("i", $cart_id);
-                if (!$stmt_delete->execute()) throw new Exception("Lỗi thực thi xóa giỏ hàng.");
-                $stmt_delete->close();
+    // Bắt đầu giao dịch (Transaction)
+    $conn->begin_transaction();
+    try {
+        // 1. TÍNH TỔNG SỐ TIỀN CỦA ĐƠN HÀNG TỪ CHI TIẾT GIỎ HÀNG
+        $sql_total = "
+            SELECT SUM(ci.quantity * p.price) AS total_amount
+            FROM cart_items ci
+            JOIN products p ON ci.product_id = p.product_id
+            WHERE ci.cart_id = ?
+        ";
+        
+        $stmt_total = $conn->prepare($sql_total);
+        if ($stmt_total === false) throw new Exception("Lỗi chuẩn bị tính tổng tiền.");
+        
+        $stmt_total->bind_param("i", $cart_id);
+        $stmt_total->execute();
+        $result = $stmt_total->get_result();
+        $row = $result->fetch_assoc();
+        $total_amount = $row['total_amount'] ?? 0;
+        $stmt_total->close();
 
-                $conn->commit();
-                echo json_encode(['success' => true, 'message' => 'Thanh toán hoàn tất, giỏ hàng đã được xóa.']);
-            } catch (Exception $e) {
-                $conn->rollback();
-                respondWithError($conn, 'Lỗi hoàn tất thanh toán: ' . $e->getMessage());
-            }
-            break;
-            
-        default:
-            // Lỗi 400 được xử lý ở Controller
-            break;
+        // Kiểm tra nếu tổng tiền là 0
+        if ($total_amount <= 0) {
+            throw new Exception("Giỏ hàng rỗng hoặc tổng tiền không hợp lệ. Đơn hàng không được tạo.");
+        }
+        
+        // 2. GHI BẢN GHI MỚI VÀO BẢNG ORDERS (Sinh ra Đơn hàng)
+        $payment_method = 'QR Transfer';
+        
+        // KHÔNG BAO GỒM cart_id trong lệnh INSERT
+        $sql_insert_order = "
+            INSERT INTO orders (user_id, total_amount, payment_method, order_date)
+            VALUES (?, ?, ?, NOW())
+        ";
+        
+        $stmt_insert = $conn->prepare($sql_insert_order);
+        if ($stmt_insert === false) throw new Exception("Lỗi chuẩn bị ghi vào bảng orders.");
+        
+        // Bind: user_id (i), total_amount (d), payment_method (s)
+        $stmt_insert->bind_param("ids", $user_id, $total_amount, $payment_method);
+        if (!$stmt_insert->execute()) throw new Exception("Lỗi thực thi ghi vào bảng orders.");
+        $stmt_insert->close();
+        
+        // 3. CẬP NHẬT TRẠNG THÁI GIỎ HÀNG CŨ (Đóng Giỏ hàng)
+        $sql_update_cart_status = "
+            UPDATE carts 
+            SET status = 'completed', updated_at = NOW() 
+            WHERE cart_id = ?
+        ";
+        
+        $stmt_update_status = $conn->prepare($sql_update_cart_status);
+        if ($stmt_update_status === false) throw new Exception("Lỗi chuẩn bị update cart status.");
+        $stmt_update_status->bind_param("i", $cart_id);
+        if (!$stmt_update_status->execute()) throw new Exception("Lỗi thực thi update cart status.");
+        $stmt_update_status->close();
+
+        // 4. XÓA TẤT CẢ ITEMS TRONG GIỎ HÀNG HIỆN TẠI (Thực hiện yêu cầu mới)
+        $stmt_delete_items = $conn->prepare("DELETE FROM cart_items WHERE cart_id = ?");
+        if ($stmt_delete_items === false) throw new Exception("Lỗi chuẩn bị xóa chi tiết giỏ hàng.");
+        
+        $stmt_delete_items->bind_param("i", $cart_id);
+        if (!$stmt_delete_items->execute()) throw new Exception("Lỗi thực thi xóa chi tiết giỏ hàng.");
+        $stmt_delete_items->close();
+
+        // 5. HOÀN TẤT VÀ PHẢN HỒI
+        $conn->commit();
+        
+        echo json_encode([
+            'success' => true, 
+            'message' => 'Thanh toán thành công. Đơn hàng đã được tạo và giỏ hàng đã được làm sạch.'
+        ]);
+        
+    } catch (Exception $e) {
+        $conn->rollback();
+        // Giả định respondWithError đã được định nghĩa ở Controller
+        respondWithError($conn, 'Lỗi hoàn tất thanh toán: ' . $e->getMessage()); 
+    }
+    break;
     }
 }
 ?>

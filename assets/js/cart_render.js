@@ -226,19 +226,31 @@ Noi dung thanh toan:  ${transferNote} `;
 
     // 3. Hoàn tất Thanh toán (Xóa giỏ hàng trên DB)
     paymentCompleteBtn.addEventListener('click', function () {
-        updateCartItem('checkout_complete', 0).then(data => {
-            if (data.success) {
-                Swal.fire('Thành công!', 'Thanh toán hoàn tất. Cảm ơn bạn đã mua sản phẩm bên mình. Chúc bạn ngon miệng !!! ', 'success');
-                renderCart();
-            } else {
-                 Swal.fire('Lỗi', data.message, 'error');
-            }
-        });
-        qrModal.style.display = 'none';
-    });
+        
+        // 1. Gọi API để CẬP NHẬT trạng thái đơn hàng (checkout_complete)
+        updateCartItem('checkout_complete', 0).then(data => {
+            if (data.success) {
+                Swal.fire(
+                    'Thành công!', 
+                    'Đơn hàng đã được xác nhận. Vui lòng thêm sản phẩm mới để tiếp tục mua sắm.', 
+                    'success'
+                );
+                
+                // 2. Sau khi xác nhận thành công, gọi renderCart()
+                // Backend sẽ tạo giỏ mới (status='pending') và Frontend hiển thị giỏ trống.
+                renderCart(); 
+                
+            } else {
+                Swal.fire('Lỗi', data.message, 'error');
+            }
+            
+            // 3. Đóng modal sau khi xử lý xong (dù thành công hay thất bại)
+            qrModal.style.display = 'none'; 
+ });
+            });
 
 
-    // KHỞI CHẠY CHÍNH
-    renderCart();
-    window.renderCart = renderCart;
+    // KHỞI CHẠY CHÍNH
+    renderCart();
+    window.renderCart = renderCart;
 });

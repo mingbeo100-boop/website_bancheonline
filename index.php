@@ -83,6 +83,8 @@ if (isset($_SESSION['username']) && in_array($_SESSION['username'], $admin_users
             include 'pages/home.php';
         } elseif ($page == 'about_us') {
             include 'pages/about_us.php';
+        } elseif ($page == 'thongke') {
+            include 'pages/thongke.php';
         } elseif ($page == 'menu') {
             include 'pages/menu.php';
         } elseif ($page == 'hethongcuahang') {
