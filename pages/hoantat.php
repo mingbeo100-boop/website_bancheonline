@@ -45,7 +45,7 @@ $payment_method_display = ($method == 'cod') ? 'Thanh toán khi nhận hàng (CO
         Cửa hàng sẽ sớm xác nhận đơn hàng và tiến hành giao hàng. Vui lòng kiểm tra email (hoặc mục Đơn Hàng) để theo dõi trạng thái đơn hàng chi tiết.
     </p>
 
-    <div class="mt-5 d-flex justify-content-center gap-5">
+    <div class="mt-5 d-flex justify-content-center gap-4">
 
     <button type="button" id="continueShoppingBtn" 
         class="btn btn-primary btn-lg** custom-btn-effect">
@@ -93,7 +93,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (viewOrdersBtn) {
         viewOrdersBtn.addEventListener('click', function() {
             // Chuyển hướng đến trang Đơn hàng (Danh sách đơn hàng)
-            window.location.href = 'index.php?page=donhang';
+            window.location.href = 'index.php?page=orders';
         });
     }
 });

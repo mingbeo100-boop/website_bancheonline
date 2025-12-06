@@ -66,7 +66,7 @@ if (isset($_SESSION['username']) && in_array($_SESSION['username'], $admin_users
         </ul>
 
         <ul class="nav-right">
-            <li class="nav-item"><a href="index.php?page=hoantat">ĐƠN HÀNG</a></li>
+            <li class="nav-item"><a href="index.php?page=orders">ĐƠN HÀNG</a></li>
             <li class="nav-item"><a href="index.php?page=giohang">GIỎ HÀNG</a></li>
             <!-- <li class="nav-item"><a href="index.php?page=about_us">VỀ CHÚNG TÔI</a></li> -->
             <li class="nav-item"><a href="index.php?page=hethongcuahang">HỆ THỐNG CỬA HÀNG</a></li>
@@ -99,7 +99,8 @@ if (isset($_SESSION['username']) && in_array($_SESSION['username'], $admin_users
             include 'pages/cart.php';
         } elseif ($page == 'hoantat') { 
             include 'pages/hoantat.php';
-        
+        } elseif ($page == 'orders') { 
+            include 'pages/orders.php';
         } else {
             include 'pages/home.php'; // Trang mặc định nếu page không hợp lệ
         }

@@ -122,9 +122,27 @@
       const apiEndpoint = '../backend/api.php'; 
       const currentYear = new Date().getFullYear();
       // Hàm định dạng số thành VNĐ (có dấu phẩy)
-      const formatCurrency = (number) => {
-        return new Intl.NumberFormat('vi-VN').format(Math.round(number));
-      };
+      // Hàm định dạng số thành VNĐ (có dấu chấm)
+const formatCurrency = (number) => {
+    // 1. Chuyển đổi thành số
+    const num = parseFloat(number);
+    
+    // 2. NHÂN VỚI 1000 (Giả định dữ liệu gốc là đơn vị nghìn đồng)
+    const totalInDong = num * 1000; 
+    
+    if (isNaN(totalInDong)) {
+        return 'N/A';
+    }
+
+    // 3. Định dạng theo chuẩn Việt Nam (có dấu chấm)
+    const formattedNumber = new Intl.NumberFormat('vi-VN', {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+    }).format(totalInDong);
+    
+    // 4. Trả về định dạng có kèm theo ký hiệu
+    return formattedNumber; // Trả về số đã định dạng (ví dụ: 169.000)
+};
       
       // Hàm tạo options cho select box
       const populateSelect = (elementId, start, end, selected) => {

@@ -211,3 +211,4 @@
             </div>
         </div>
     </div>
+    <script src="assets/js/review.js"></script>
