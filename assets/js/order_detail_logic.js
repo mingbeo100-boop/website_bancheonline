@@ -1,11 +1,11 @@
 /**
  * Tệp JavaScript xử lý Checkout và Thanh toán
- * (Sử dụng ID tự tăng của SQL làm mã đơn hàng hiển thị)
  */
 
 // Giả định hàm updateCartItem đã được định nghĩa và nhận (action, productId, quantity, method)
-
-function generateQRCode(amount) {
+// 
+// 🔥 KHẮC PHỤC LỖI SCOPE: Thêm currentOrderId vào tham số
+function generateQRCode(amount, currentOrderId) { 
     const qrCodeContainer = document.getElementById('qrcode');
     
     // Xóa mã QR cũ nếu có
@@ -15,7 +15,9 @@ function generateQRCode(amount) {
     const bankId = '970403'; 
     const accountNumber = '0796727753'; 
     const receiverName = 'TRAN NHAT LONG'; 
-    const transferNote = `TTCHEAE${Math.floor(Math.random() * 1000)}`; 
+    
+    // 🔥 SỬ DỤNG currentOrderId ĐƯỢC TRUYỀN VÀO (thay cho orderId cục bộ)
+    const transferNote = `TTCHEAE${currentOrderId || Math.floor(Math.random() * 1000)}`;
 
     // Tạo chuỗi dữ liệu cho QR code
     const dataForQR = `Dich vu: Thanh toan Che; STK: ${accountNumber}; Tien: ${amount.toFixed(0)} VND; ND: ${transferNote}`;
@@ -54,6 +56,17 @@ document.addEventListener('DOMContentLoaded', function() {
     const urlParams = new URLSearchParams(window.location.search);
     const orderId = urlParams.get('order_id');
     const totalAmount = parseInt(urlParams.get('total')); 
+    
+    // 🔥 BỔ SUNG: KIỂM TRA TỔNG TIỀN HỢP LỆ (Nếu lỗi 'Giỏ hàng rỗng' tái diễn)
+    if (isNaN(totalAmount) || totalAmount <= 0) {
+         // Nếu tổng tiền không hợp lệ, hiển thị lỗi và dừng script
+         Swal.fire({
+             icon: 'error',
+             title: 'Lỗi Dữ Liệu',
+             text: 'Tổng tiền đơn hàng không hợp lệ. Vui lòng quay lại giỏ hàng.'
+         });
+         // Không cần return ở đây, chỉ cần đảm bảo các sự kiện click sẽ không chạy nếu lỗi này xảy ra
+    }
     
     
     // --- A. XỬ LÝ CHỌN PHƯƠNG THỨC THANH TOÁN (Giữ nguyên) ---
@@ -119,6 +132,11 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
+        if (totalAmount <= 0) {
+             Swal.fire('Lỗi', 'Giỏ hàng rỗng hoặc tổng tiền không hợp lệ. Vui lòng tải lại trang.', 'error');
+             return;
+        }
+
         if (selectedPaymentMethod === 'cod') {
             const method = 'cod';
         
@@ -157,7 +175,10 @@ document.addEventListener('DOMContentLoaded', function() {
             // Logic QR: Hiển thị Modal để thanh toán
             if (qrModal && modalTotalPriceContainer) {
                 modalTotalPriceContainer.textContent = totalAmount.toLocaleString('vi-VN', { maximumFractionDigits: 0 }) + ' ₫';
-                generateQRCode(totalAmount);
+                
+                // 🔥 SỬA: TRUYỀN orderId CỤC BỘ VÀO HÀM generateQRCode
+                generateQRCode(totalAmount, orderId); 
+                
                 qrModal.style.display = 'block';
             } else {
                 Swal.fire('Lỗi', 'Không tìm thấy Modal QR. Vui lòng kiểm tra lại ID HTML.', 'error'); 

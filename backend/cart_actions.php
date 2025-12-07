@@ -9,7 +9,7 @@ function handle_cart_action($conn, $user_id, $cart_id, $action, $method = null) 
 
     switch ($action) {
         
-        // --- LẤY DỮ LIỆU GIỎ HÀNG ---
+        // --- LẤY DỮ LIỆU GIỎ HÀNG (GIỮ NGUYÊN) ---
         case 'get_cart':
             $sql = "
                 SELECT ci.quantity, p.product_id, p.name, p.price 
@@ -30,7 +30,7 @@ function handle_cart_action($conn, $user_id, $cart_id, $action, $method = null) 
             echo json_encode(['success' => true, 'items' => $items]);
             break;
             
-        // --- THÊM SẢN PHẨM VÀO GIỎ ---
+        // --- THÊM SẢN PHẨM VÀO GIỎ (GIỮ NGUYÊN) ---
         case 'add_to_cart':
             $product_id = $_POST['product_id'] ?? null;
             $quantity = $_POST['quantity'] ?? 1;
@@ -80,7 +80,7 @@ function handle_cart_action($conn, $user_id, $cart_id, $action, $method = null) 
             }
             break;
 
-        // --- CẬP NHẬT SỐ LƯỢNG ---
+        // --- CẬP NHẬT SỐ LƯỢNG (GIỮ NGUYÊN) ---
         case 'update_quantity':
             $product_id = $_POST['product_id'] ?? null;
             $new_quantity = $_POST['quantity'] ?? null;
@@ -113,7 +113,7 @@ function handle_cart_action($conn, $user_id, $cart_id, $action, $method = null) 
             }
             break;
 
-        // --- XÓA SẢN PHẨM ---
+        // --- XÓA SẢN PHẨM (GIỮ NGUYÊN) ---
         case 'remove_item':
             $product_id = $_POST['product_id'] ?? null;
             
@@ -145,7 +145,7 @@ function handle_cart_action($conn, $user_id, $cart_id, $action, $method = null) 
         // --- HOÀN TẤT THANH TOÁN ---
         case 'checkout_complete':
         
-            // 🔥 LOGIC: Chuyển đổi method từ JS ('cod', 'qr') sang tên hiển thị
+            // LOGIC: Chuyển đổi method từ JS ('cod', 'qr') sang tên hiển thị
             $payment_method = match ($method) {
                 'cod' => 'COD (Cash on Delivery)',
                 'qr' => 'QR/Bank Transfer',
@@ -155,7 +155,7 @@ function handle_cart_action($conn, $user_id, $cart_id, $action, $method = null) 
             // Bắt đầu giao dịch (Transaction)
             $conn->begin_transaction();
             try {
-                // 1. 🔥 KHÔI PHỤC VÀ TÍNH TỔNG SỐ TIỀN CỦA ĐƠN HÀNG
+                // 1. KHÔI PHỤC VÀ TÍNH TỔNG SỐ TIỀN CỦA ĐƠN HÀNG
                 $sql_total = "
                     SELECT SUM(ci.quantity * p.price) AS total_amount
                     FROM cart_items ci
@@ -185,17 +185,15 @@ function handle_cart_action($conn, $user_id, $cart_id, $action, $method = null) 
                 ";
                 
                 $stmt_insert = $conn->prepare($sql_insert_order);
-                if ($stmt_insert === false) throw new Exception("Lỗi chuẩn bị ghi vào bảng orders."); // 🔥 Sửa lỗi: Check chuẩn bị
+                if ($stmt_insert === false) throw new Exception("Lỗi chuẩn bị ghi vào bảng orders.");
                 
                 // Bind: user_id (i), total_amount (d), payment_method (s)
                 $stmt_insert->bind_param("ids", $user_id, $total_amount, $payment_method);
                 if (!$stmt_insert->execute()) throw new Exception("Lỗi thực thi ghi vào bảng orders.");
                 $stmt_insert->close();
 
-                // 🔥 LẤY ORDER_ID (ID tự tăng) VÀ SINH ORDER_CODE TÙY CHỈNH 🔥
+                // LẤY ORDER_ID (ID tự tăng) VÀ SINH ORDER_CODE TÙY CHỈNH
                 $new_order_id = $conn->insert_id; // Lấy ID tự tăng
-                
-                // Định dạng mã: AEKH - Năm/Tháng/Ngày - ID tự tăng (padded 4 số)
                 $order_code = 'AEKH-' . date('ymd') . '-' . str_pad($new_order_id, 4, '0', STR_PAD_LEFT);
 
                 // 3. CẬP NHẬT ORDER_CODE CHO BẢN GHI VỪA TẠO
@@ -211,10 +209,11 @@ function handle_cart_action($conn, $user_id, $cart_id, $action, $method = null) 
                 if (!$stmt_update_code->execute()) throw new Exception("Lỗi thực thi update order_code.");
                 $stmt_update_code->close();
                 
-                // 4. 🔥 KHÔI PHỤC VÀ CẬP NHẬT TRẠNG THÁI GIỎ HÀNG CŨ (Đóng Giỏ hàng)
+                // 4. 🔥 SỬA LỖI: CẬP NHẬT TRẠNG THÁI GIỎ HÀNG CŨ (Đóng Giỏ hàng)
+                // ĐÃ XÓA DẤU PHẨY VÀ CỘT updated_at
                 $sql_update_cart_status = "
                     UPDATE carts 
-                    SET status = 'completed', updated_at = NOW() 
+                    SET status = 'completed'
                     WHERE cart_id = ?
                 ";
                 
@@ -238,7 +237,7 @@ function handle_cart_action($conn, $user_id, $cart_id, $action, $method = null) 
                 echo json_encode([
                     'success' => true, 
                     'message' => 'Thanh toán thành công. Đơn hàng đã được tạo và giỏ hàng đã được làm sạch.',
-                    // 🔥 TRẢ VỀ MÃ ĐƠN HÀNG TÙY CHỈNH CHO FRONTEND
+                    // TRẢ VỀ MÃ ĐƠN HÀNG TÙY CHỈNH CHO FRONTEND
                     'order_id' => $new_order_id, // Giữ lại ID tự tăng (Dùng cho debug)
                     'order_code' => $order_code 
                 ]);
