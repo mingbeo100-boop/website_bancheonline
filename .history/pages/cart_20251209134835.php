@@ -97,6 +97,7 @@
     </style>
 </div>
 
+<<<<<<< HEAD
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <!-- Thêm CSS cho Leaflet -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
@@ -360,6 +361,7 @@
         renderCart();
     });
 </script>
+=======
 <style>
 /* CSS cơ bản cho Modal */
 .modal {
@@ -420,3 +422,4 @@
 <script src="assets/js/cart_api.js"></script> 
 
 <script src="assets/js/cart_render.js"></script>
+>>>>>>> origin/back-end
