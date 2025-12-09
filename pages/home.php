@@ -37,7 +37,7 @@
         <h1 class="text-center khoangcach">Những món chè bán chạy nhất 2025</h1>
         <div class="row">
             <div class="col">
-                <div class="product-card">
+                <div class="product-card" data-product-id="301">
                     <img src="./assets/images/menu/caramen-hoa-qua.png" alt="1" class="img-sanpham">
                     <strong>Caramen Hoa Quả</strong>
                     <p>Sữa chua</p>
@@ -45,14 +45,14 @@
                     <div class="overlay">
                         <p class="detail">Caramen mềm mịn kết hợp hoa quả tươi mát, ngọt thanh.</p>
                         <button class="add-to-cart"
-                            onclick="addToCart('Caramen Hoa Quả', '25.000 ', './assets/images/caramen-hoa-qua.png')">THÊM
+                            onclick="addToCart('301','Caramen Hoa Quả', '25.000 ', './assets/images/caramen-hoa-qua.png')">THÊM
                             VÀO GIỎ</button>
                     </div>
                 </div>
             </div>
 
             <div class="col">
-                <div class="product-card">
+                <div class="product-card" data-product-id="107">
                     <img src="./assets/images/menu/dua-dam-thai-sau-rieng.png" alt="2" class="img-sanpham">
                     <strong>Chè Dừa Dầm Thái Có Sầu</strong>
                     <p>Chè thái</p>
@@ -60,14 +60,14 @@
                     <div class="overlay">
                         <p class="detail">Chè Thái với topping dừa dầm, thơm béo sầu riêng đặc trưng.</p>
                         <button class="add-to-cart"
-                            onclick="addToCart('Chè Dừa dầm Thái Có Sầu', '30.000 ', './assets/images/dua-dam-thai-sau-rieng.png')">THÊM
+                            onclick="addToCart('107','Chè Dừa dầm Thái Có Sầu', '30.000 ', './assets/images/dua-dam-thai-sau-rieng.png')">THÊM
                             VÀO GIỎ</button>
                     </div>
                 </div>
             </div>
 
             <div class="col">
-                <div class="product-card">
+                <div class="product-card" data-product-id="108">
                     <img src="./assets/images/menu/sua-chua-hoa-qua.png" alt="3" class="img-sanpham">
                     <strong>Sữa Chua Hoa Quả</strong>
                     <p>Sữa chua</p>
@@ -75,7 +75,7 @@
                     <div class="overlay">
                         <p class="detail">Sữa chua mát lạnh, trái cây tươi ngon, vị chua ngọt hài hòa.</p>
                         <button class="add-to-cart"
-                            onclick="addToCart('Chè Dừa Dầm Thái', '25.000 ', './assets/images/dua-dam-thai.png')">THÊM
+                            onclick="addToCart('108','Chè Dừa Dầm Thái', '25.000 ', './assets/images/dua-dam-thai.png')">THÊM
                             VÀO GIỎ</button>
                     </div>
                 </div>
@@ -211,3 +211,4 @@
             </div>
         </div>
     </div>
+    <script src="assets/js/review.js"></script>
