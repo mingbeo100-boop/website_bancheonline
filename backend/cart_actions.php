@@ -1,9 +1,8 @@
 <?php
 // Tên file: backend/cart_actions.php
 // File này giả định $conn, $user_id, $cart_id đã được định nghĩa và respondWithError đã được include.
-
-// 🔥 SỬA: Thêm tham số $method vào định nghĩa hàm
-function handle_cart_action($conn, $user_id, $cart_id, $action, $method = null) {
+// 🔥 SỬA: Thêm tham số $customer_info vào định nghĩa hàm
+function handle_cart_action($conn, $user_id, $cart_id, $action, $method = null, $customer_info = []) {
     // Kích hoạt Strict Reporting để try...catch bắt được lỗi SQL (quan trọng)
     mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
@@ -28,6 +27,7 @@ function handle_cart_action($conn, $user_id, $cart_id, $action, $method = null) 
 
             
             echo json_encode(['success' => true, 'items' => $items]);
+            exit;
             break;
             
         // --- THÊM SẢN PHẨM VÀO GIỎ (GIỮ NGUYÊN) ---
@@ -142,110 +142,81 @@ function handle_cart_action($conn, $user_id, $cart_id, $action, $method = null) 
             }
             break;
             
-        // --- HOÀN TẤT THANH TOÁN ---
+        // --- HOÀN TẤT THANH TOÁN (CHECKOUT_COMPLETE) ---
         case 'checkout_complete':
-        
-            // LOGIC: Chuyển đổi method từ JS ('cod', 'qr') sang tên hiển thị
-            $payment_method = match ($method) {
-                'cod' => 'COD (Cash on Delivery)',
-                'qr' => 'QR/Bank Transfer',
-                default => 'Unknown' // Đảm bảo luôn có giá trị
-            };
             
-            // Bắt đầu giao dịch (Transaction)
+            // XỬ LÝ PAYMENT METHOD (An toàn PHP < 8.0)
+            $payment_method = 'Không xác định';
+            if ($method === 'cod') {
+                $payment_method = 'COD (Thanh toán khi nhận)';
+            } elseif ($method === 'qr') {
+                $payment_method = 'Chuyển khoản QR';
+            }
+
+            // Lấy thông tin người nhận từ mảng $customer_info
+            $name = $customer_info['name'] ?? '';
+            $phone = $customer_info['phone'] ?? '';
+            $address = $customer_info['address'] ?? '';
+
+            // Kiểm tra thông tin người nhận
+            if (!$name || !$phone || !$address) {
+                // Lỗi này không nên xảy ra nếu frontend đã xác nhận, nhưng là kiểm tra an toàn
+                respondWithError($conn, 'Lỗi: Thiếu thông tin người nhận khi tạo đơn hàng.', 400);
+            }
+
             $conn->begin_transaction();
             try {
-                // 1. KHÔI PHỤC VÀ TÍNH TỔNG SỐ TIỀN CỦA ĐƠN HÀNG
-                $sql_total = "
-                    SELECT SUM(ci.quantity * p.price) AS total_amount
-                    FROM cart_items ci
-                    JOIN products p ON ci.product_id = p.product_id
-                    WHERE ci.cart_id = ?
-                ";
-                
-                $stmt_total = $conn->prepare($sql_total);
-                if ($stmt_total === false) throw new Exception("Lỗi chuẩn bị tính tổng tiền.");
-                
+                // 1. Tính tổng tiền
+                $stmt_total = $conn->prepare("SELECT SUM(ci.quantity * p.price) AS total FROM cart_items ci JOIN products p ON ci.product_id = p.product_id WHERE ci.cart_id = ?");
                 $stmt_total->bind_param("i", $cart_id);
                 $stmt_total->execute();
-                $result = $stmt_total->get_result();
-                $row = $result->fetch_assoc();
-                $total_amount = $row['total_amount'] ?? 0;
+                $total_amount = $stmt_total->get_result()->fetch_assoc()['total'] ?? 0;
                 $stmt_total->close();
 
-                // Kiểm tra nếu tổng tiền là 0
-                if ($total_amount <= 0) {
-                    throw new Exception("Giỏ hàng rỗng hoặc tổng tiền không hợp lệ. Đơn hàng không được tạo.");
-                }
+                if ($total_amount <= 0) throw new Exception("Giỏ hàng rỗng.");
                 
-                // 2. GHI BẢN GHI MỚI VÀO BẢNG ORDERS
-                $sql_insert_order = "
-                    INSERT INTO orders (user_id, total_amount, payment_method, order_date)
-                    VALUES (?, ?, ?, NOW())
-                ";
+                // 2. TẠO ĐƠN HÀNG (INSERT vào orders với 3 cột địa chỉ)
+               $sql_order = "INSERT INTO orders (user_id, total_amount, payment_method, order_date, recipient_name, recipient_phone, shipping_address, order_status) VALUES (?, ?, ?, NOW(), ?, ?, ?, 'pending')";
+                $stmt_order = $conn->prepare($sql_order);
                 
-                $stmt_insert = $conn->prepare($sql_insert_order);
-                if ($stmt_insert === false) throw new Exception("Lỗi chuẩn bị ghi vào bảng orders.");
+                // 🔥 SỬA LỖI FATAL: CHUỖI BIND CÓ 6 KÝ TỰ - "idssss"
+                // i (user_id), d (total_amount), s (payment_method), s (name), s (phone), s (address)
+                $stmt_order->bind_param("idssss", $user_id, $total_amount, $payment_method, $name, $phone, $address);
                 
-                // Bind: user_id (i), total_amount (d), payment_method (s)
-                $stmt_insert->bind_param("ids", $user_id, $total_amount, $payment_method);
-                if (!$stmt_insert->execute()) throw new Exception("Lỗi thực thi ghi vào bảng orders.");
-                $stmt_insert->close();
-
-                // LẤY ORDER_ID (ID tự tăng) VÀ SINH ORDER_CODE TÙY CHỈNH
-                $new_order_id = $conn->insert_id; // Lấy ID tự tăng
+                if (!$stmt_order->execute()) throw new Exception("Lỗi thực thi tạo đơn: " . $stmt_order->error);
+                
+                $new_order_id = $conn->insert_id;
+                
+                // Đóng Statement INSERT
+                $stmt_order->close();
+                // 3. Cập nhật Mã đơn hàng (AEKH-...)
                 $order_code = 'AEKH-' . date('ymd') . '-' . str_pad($new_order_id, 4, '0', STR_PAD_LEFT);
+                $conn->query("UPDATE orders SET order_code = '$order_code' WHERE order_id = $new_order_id");
 
-                // 3. CẬP NHẬT ORDER_CODE CHO BẢN GHI VỪA TẠO
-                $sql_update_code = "
-                    UPDATE orders 
-                    SET order_code = ? 
-                    WHERE order_id = ?
-                ";
-                $stmt_update_code = $conn->prepare($sql_update_code);
-                if ($stmt_update_code === false) throw new Exception("Lỗi chuẩn bị update order_code.");
+                // 4. COPY SẢN PHẨM TỪ GIỎ SANG ORDER_DETAILS
+                $sql_copy = "INSERT INTO order_details (order_id, product_id, quantity, price_at_purchase)
+                             SELECT ?, ci.product_id, ci.quantity, p.price FROM cart_items ci JOIN products p ON ci.product_id = p.product_id WHERE ci.cart_id = ?";
+                $stmt_copy = $conn->prepare($sql_copy);
+                $stmt_copy->bind_param("ii", $new_order_id, $cart_id);
+                $stmt_copy->execute();
+                $stmt_copy->close();
                 
-                $stmt_update_code->bind_param("si", $order_code, $new_order_id);
-                if (!$stmt_update_code->execute()) throw new Exception("Lỗi thực thi update order_code.");
-                $stmt_update_code->close();
-                
-                // 4. 🔥 SỬA LỖI: CẬP NHẬT TRẠNG THÁI GIỎ HÀNG CŨ (Đóng Giỏ hàng)
-                // ĐÃ XÓA DẤU PHẨY VÀ CỘT updated_at
-                $sql_update_cart_status = "
-                    UPDATE carts 
-                    SET status = 'completed'
-                    WHERE cart_id = ?
-                ";
-                
-                $stmt_update_status = $conn->prepare($sql_update_cart_status);
-                if ($stmt_update_status === false) throw new Exception("Lỗi chuẩn bị update cart status.");
-                $stmt_update_status->bind_param("i", $cart_id);
-                if (!$stmt_update_status->execute()) throw new Exception("Lỗi thực thi update cart status.");
-                $stmt_update_status->close();
+                // 5. Xóa sạch giỏ hàng cũ
+                $conn->query("DELETE FROM cart_items WHERE cart_id = $cart_id");
 
-                // 5. XÓA TẤT CẢ ITEMS TRONG GIỎ HÀNG HIỆN TẠI (Làm sạch giỏ)
-                $stmt_delete_items = $conn->prepare("DELETE FROM cart_items WHERE cart_id = ?");
-                if ($stmt_delete_items === false) throw new Exception("Lỗi chuẩn bị xóa chi tiết giỏ hàng.");
-                
-                $stmt_delete_items->bind_param("i", $cart_id);
-                if (!$stmt_delete_items->execute()) throw new Exception("Lỗi thực thi xóa chi tiết giỏ hàng.");
-                $stmt_delete_items->close();
-
-                // 6. HOÀN TẤT VÀ PHẢN HỒI
                 $conn->commit();
                 
-                echo json_encode([
-                    'success' => true, 
-                    'message' => 'Thanh toán thành công. Đơn hàng đã được tạo và giỏ hàng đã được làm sạch.',
-                    // TRẢ VỀ MÃ ĐƠN HÀNG TÙY CHỈNH CHO FRONTEND
-                    'order_id' => $new_order_id, // Giữ lại ID tự tăng (Dùng cho debug)
-                    'order_code' => $order_code 
-                ]);
-                
+                // TRẢ VỀ JSON THÀNH CÔNG VÀ DỪNG SCRIPT
+                echo json_encode(['success' => true, 'order_id' => $new_order_id, 'order_code' => $order_code]);
+                exit; 
+
             } catch (Exception $e) {
                 $conn->rollback();
-                respondWithError($conn, 'Lỗi hoàn tất thanh toán: ' . $e->getMessage()); 
+                respondWithError($conn, 'Lỗi hoàn tất thanh toán: ' . $e->getMessage());
             }
             break;
+            
+        default:
+             respondWithError($conn, 'Hành động không hợp lệ.', 400);
     }
 }

@@ -1,26 +1,34 @@
 <?php
-// Tên file: backend/cart_controller.php
-
-// 1. Nhúng các file cần thiết
-require 'connect.php';      // Đối tượng kết nối MySQLi ($conn)
-require 'utils.php';        // Hàm respondWithError
-require 'cart_actions.php'; // Hàm handle_cart_action
+// backend/cart_controller.php
+require_once 'connect.php';
+require_once 'utils.php';
+require_once 'cart_actions.php';
 
 session_start();
-$user_id = $_SESSION['user_id'] ?? null; 
-$action = $_POST['action'] ?? $_GET['action'] ?? null;
-// 🔥 THÊM: Nhận phương thức thanh toán từ POST
-$method = $_POST['method'] ?? null; 
-
-// Gán header JSON ở đây
+// Đặt header JSON ngay đầu file 
 header('Content-Type: application/json');
 
-// --- 2. XÁC THỰC USER ---
+// Tắt hiển thị lỗi PHP ra màn hình (chỉ log vào file)
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
+
+$user_id = $_SESSION['user_id'] ?? null;
+$action = $_POST['action'] ?? $_GET['action'] ?? null;
+$method = $_POST['method'] ?? null;
+
+// 🔥 NHẬN THÔNG TIN NGƯỜI NHẬN TỪ POST
+$customer_info = [
+    // LƯU Ý: Frontend đã dùng encodeURIComponent, nên PHP tự động decode
+    'name' => $_POST['name'] ?? '',
+    'phone'  => $_POST['phone'] ?? '',
+    'address' => $_POST['address'] ?? ''
+];
+
 if (!$user_id) {
-    respondWithError(null, 'Vui lòng đăng nhập để quản lý giỏ hàng.', 401);
+    respondWithError(null, 'Vui lòng đăng nhập.', 401); 
 }
 
-// --- 3. LẤY CART ID HOẶC TẠO MỚI (Khối code này giữ nguyên) ---
+// --- 3. LẤY CART ID HOẶC TẠO MỚI (Giữ nguyên logic giỏ hàng) ---
 $cart_id = null; 
 $stmt_cart = null; 
 
@@ -35,7 +43,7 @@ try {
 
     if ($result_cart->num_rows === 0) {
         
-        // --- TẠO CART MỚI (Khối code được bảo vệ) ---
+        // --- TẠO CART MỚI ---
         $conn->begin_transaction();
         
         $stmt_insert = $conn->prepare("INSERT INTO carts (user_id) VALUES (?)");
@@ -47,7 +55,7 @@ try {
         $cart_id = $conn->insert_id;
         $stmt_insert->close();
         
-        $conn->commit(); // Lưu thay đổi
+        $conn->commit(); 
         
     } else {
         // Lấy Cart ID đã tồn tại
@@ -56,14 +64,10 @@ try {
     }
 
 } catch (Exception $e) {
-    // Gọi rollback() trực tiếp.
     $conn->rollback(); 
-    
-    // Trả về lỗi nghiêm trọng cho Frontend
     respondWithError($conn, 'Lỗi hệ thống khi thiết lập giỏ hàng: ' . $e->getMessage(), 500);
 
 } finally {
-    // Đóng statement
     if (isset($stmt_cart) && $stmt_cart instanceof mysqli_stmt) {
         $stmt_cart->close();
     }
@@ -72,13 +76,11 @@ try {
 
 // --- 4. GỌI ACTION TƯƠNG ỨNG ---
 if ($action && $cart_id) {
-    // 🔥 CẬP NHẬT: Truyền thêm $method vào hàm xử lý
-    handle_cart_action($conn, $user_id, $cart_id, $action, $method);
+    // 🔥 SỬA: Truyền đầy đủ 6 tham số, bao gồm $customer_info
+    handle_cart_action($conn, $user_id, $cart_id, $action, $method, $customer_info); 
 } else if (!$action) {
-    // ...
     respondWithError(null, 'Hành động không được chỉ định.', 400);
 } else {
-    // ...
     respondWithError(null, 'Không thể xác định giỏ hàng của người dùng.', 500);
 }
 

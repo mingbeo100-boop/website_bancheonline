@@ -1,50 +1,51 @@
 /**
  * Tệp JavaScript xử lý Checkout và Thanh toán
+ * Vị trí: assets/js/order_detail_logic.js
+ * Logic: Lưu thông tin địa chỉ vào biến confirmedAddressData 
+ * và sử dụng biến này khi gọi processCheckout.
  */
 
-// Giả định hàm updateCartItem đã được định nghĩa và nhận (action, productId, quantity, method)
-// 
-// 🔥 KHẮC PHỤC LỖI SCOPE: Thêm currentOrderId vào tham số
+// --- 1. HÀM TẠO QR CODE ---
 function generateQRCode(amount, currentOrderId) { 
     const qrCodeContainer = document.getElementById('qrcode');
     
     // Xóa mã QR cũ nếu có
-    qrCodeContainer.innerHTML = '';
-
-    // 🔥 THÔNG TIN CẦN THAY ĐỔI 🔥 (Giữ nguyên)
-    const bankId = '970403'; 
-    const accountNumber = '0796727753'; 
-    const receiverName = 'TRAN NHAT LONG'; 
+    if (qrCodeContainer) {
+        qrCodeContainer.innerHTML = '';
+        
+        // Thông tin ngân hàng cố định
+        const bankId = '970403'; 
+        const accountNumber = '0796727753'; 
+        const transferNote = `TTCHEAE${currentOrderId || Math.floor(Math.random() * 10000)}`;
     
-    // 🔥 SỬ DỤNG currentOrderId ĐƯỢC TRUYỀN VÀO (thay cho orderId cục bộ)
-    const transferNote = `TTCHEAE${currentOrderId || Math.floor(Math.random() * 1000)}`;
+        // Định dạng dữ liệu thô
+        const rawData = `STK:${accountNumber};Tien:${amount};ND:${transferNote}`;
 
-    // Tạo chuỗi dữ liệu cho QR code
-    const dataForQR = `Dich vu: Thanh toan Che; STK: ${accountNumber}; Tien: ${amount.toFixed(0)} VND; ND: ${transferNote}`;
-
-
-    // Tạo mã QR bằng thư viện QRCode.js
-    new QRCode(qrCodeContainer, {
-        text: dataForQR, 
-        width: 180,
-        height: 180,
-        colorDark : "#000000",
-        colorLight : "#ffffff",
-        correctLevel : QRCode.CorrectLevel.H
-    });
+        // Khởi tạo QRCode
+        new QRCode(qrCodeContainer, {
+            text: rawData, 
+            width: 180,
+            height: 180,
+            colorDark : "#000000",
+            colorLight : "#ffffff",
+            correctLevel : QRCode.CorrectLevel.H
+        });
+    }
 }
-
 
 document.addEventListener('DOMContentLoaded', function() {
     
-    // 1. Lấy các phần tử cần thiết
+    // --- 2. KHỞI TẠO CÁC ELEMENT VÀ BIẾN ---
     const deliveryBlock = document.getElementById('deliveryBlock');
     const paymentBlock = document.getElementById('paymentBlock');
     const confirmAddressBtn = document.getElementById('confirmAddressBtn');
     const paymentSelection = document.getElementById('payment-selection');
     const finalConfirmBtn = document.getElementById('finalConfirmBtn');
     
-    // Lấy các phần tử Modal
+    const nameInput = document.getElementById('name');
+    const phoneInput = document.getElementById('phone');
+    const addressInput = document.getElementById('pastedAddress'); 
+    
     const qrModal = document.getElementById('qrModal'); 
     const modalTotalPriceContainer = document.getElementById('modalTotalPriceContainer'); 
     const paymentCompleteBtn = document.getElementById('paymentCompleteBtn'); 
@@ -52,192 +53,169 @@ document.addEventListener('DOMContentLoaded', function() {
 
     let selectedPaymentMethod = null;
     
-    // Lấy ID và Tổng tiền từ URL
+    // 🔥 BIẾN LƯU TRỮ THÔNG TIN ĐỊA CHỈ ĐÃ XÁC NHẬN
+    let confirmedAddressData = null; 
+
     const urlParams = new URLSearchParams(window.location.search);
-    const orderId = urlParams.get('order_id');
     const totalAmount = parseInt(urlParams.get('total')); 
-    
-    // 🔥 BỔ SUNG: KIỂM TRA TỔNG TIỀN HỢP LỆ (Nếu lỗi 'Giỏ hàng rỗng' tái diễn)
+
+    // Kiểm tra tổng tiền hợp lệ
     if (isNaN(totalAmount) || totalAmount <= 0) {
-         // Nếu tổng tiền không hợp lệ, hiển thị lỗi và dừng script
-         Swal.fire({
-             icon: 'error',
-             title: 'Lỗi Dữ Liệu',
-             text: 'Tổng tiền đơn hàng không hợp lệ. Vui lòng quay lại giỏ hàng.'
-         });
-         // Không cần return ở đây, chỉ cần đảm bảo các sự kiện click sẽ không chạy nếu lỗi này xảy ra
+        Swal.fire({ icon: 'error', title: 'Lỗi Dữ Liệu', text: 'Tổng tiền không hợp lệ. Vui lòng quay lại giỏ hàng.' });
+        return; 
     }
     
-    
-    // --- A. XỬ LÝ CHỌN PHƯƠNG THỨC THANH TOÁN (Giữ nguyên) ---
-    paymentSelection.querySelectorAll('.payment-option').forEach(option => {
-        option.addEventListener('click', function() {
-            selectedPaymentMethod = this.dataset.method;
-            if (selectedPaymentMethod === 'qr') {
-                finalConfirmBtn.textContent = `Hoàn Tất Đơn Hàng (QR)`;
-            } else {
-                finalConfirmBtn.textContent = `Hoàn Tất Đơn Hàng (COD)`;
-            }
-        });
-    });
-
-    // --- B. BƯỚC 1: XÁC NHẬN ĐỊA CHỈ (Giữ nguyên) ---
-    confirmAddressBtn.addEventListener('click', function(e) {
+    // --- 3. HÀM XỬ LÝ THANH TOÁN CHUNG (CORE LOGIC) ---
+    function processCheckout(method) {
         
-        // ... (Logic xác thực dữ liệu giữ nguyên) ...
-        const name = document.getElementById('name').value.trim();
-        const phone = document.getElementById('phone').value.trim();
-        const address = document.getElementById('pastedAddress').value.trim();
-        if (name === "" || phone === "" || address === "") {
-             Swal.fire('Thiếu thông tin', 'Vui lòng nhập đầy đủ Tên, SĐT và Địa chỉ ghim.', 'error');
-             return;
-        }
-
-        // 2. TẠO KHỐI TÓM TẮT ĐỊA CHỈ ĐÃ XÁC NHẬN
-        const confirmedSummaryHTML = `
-            <div id="addressSummaryBlock" class="address-confirmed-summary address-form-container">
-                <h2>✅ Địa Chỉ Đã Xác Nhận</h2>
-                <p><strong>Người nhận:</strong> ${name}</p>
-                <p><strong>Điện thoại:</strong> ${phone}</p>
-                <p><strong>Địa chỉ:</strong> ${address}</p>
-                <hr>
-                <button type="button" class="btn btn-sm btn-outline-secondary" id="editAddressBtn">Sửa Địa Chỉ</button>
-            </div>
-        `;
-        
-        // 3. Ẩn khối nhập liệu và Chèn khối tóm tắt
-        deliveryBlock.style.display = 'none';
-        deliveryBlock.insertAdjacentHTML('beforebegin', confirmedSummaryHTML); 
-        
-        // Gắn sự kiện cho nút Sửa Địa Chỉ
-        document.getElementById('editAddressBtn').addEventListener('click', function() {
-            document.getElementById('addressSummaryBlock').remove();
-            deliveryBlock.style.display = 'block'; 
-            paymentBlock.style.display = 'none'; 
-            finalConfirmBtn.style.display = 'none'; 
-        });
-
-        // 4. HIỂN THỊ KHỐI THANH TOÁN (Cột 2)
-        paymentBlock.style.display = 'block'; 
-        finalConfirmBtn.style.display = 'block';
-        
-        Swal.fire('Thành Công!', 'Địa chỉ đã được ghi nhận. Hãy chọn phương thức thanh toán.', 'success');
-    });
-
-    // --- C. BƯỚC 2: HOÀN TẤT ĐƠN HÀNG (Final Submit) ---
-    finalConfirmBtn.addEventListener('click', function(e) {
-        
-        if (!selectedPaymentMethod) {
-            Swal.fire('Thiếu thông tin', 'Vui lòng chọn Phương thức Thanh toán.', 'warning');
+        // KIỂM TRA MẠNH MẼ VÀ DỪNG NGAY nếu dữ liệu confirmedAddressData bị null/thiếu
+        if (!confirmedAddressData || !confirmedAddressData.name || !confirmedAddressData.phone || !confirmedAddressData.address) {
+            Swal.fire('Lỗi Dữ liệu!', 'Thông tin giao hàng không đầy đủ. Vui lòng nhấn "Sửa thông tin" và xác nhận lại.', 'error');
             return;
         }
-
-        if (totalAmount <= 0) {
-             Swal.fire('Lỗi', 'Giỏ hàng rỗng hoặc tổng tiền không hợp lệ. Vui lòng tải lại trang.', 'error');
-             return;
-        }
-
-        if (selectedPaymentMethod === 'cod') {
-            const method = 'cod';
         
-            Swal.fire({ 
-                title: 'Đang gửi Đơn hàng...', 
-                text: 'Vui lòng chờ xác nhận từ hệ thống.',
-                didOpen: () => { Swal.showLoading() }, 
-                allowOutsideClick: false 
-            });
+        const { name, phone, address } = confirmedAddressData;
+        const info = { name, phone, address }; // Dữ liệu khách hàng đã được xác nhận
 
-            // 🔥 SỬA: Thêm tham số 'cod' vào updateCartItem
-            updateCartItem('checkout_complete', 0, 0, method).then(data => {
-                Swal.close(); 
-                
-                if (data.success) {
-                    const finalOrderId = data.order_id || orderId; // Sử dụng ID từ Backend nếu có
-                    
-                    Swal.fire(
-                        'Hoàn tất!', 
-                        `Đơn hàng #${finalOrderId} đã được xác nhận. Vui lòng chuẩn bị tiền khi nhận hàng.`, 
-                        'success'
-                    ).then(() => {
-                        // Chuyển hướng với ID nhận được từ Backend (hoặc ID tạm)
-                        const redirectURL = `index.php?page=hoantat&order_id=${finalOrderId}&total=${totalAmount}&method=${method}`;
-                        window.location.href = redirectURL;
-                    });
-                } else {
-                    Swal.fire('Lỗi', data.message || 'Có lỗi xảy ra khi hoàn tất đơn hàng.', 'error');
-                }
-            }).catch(error => {
-                Swal.close();
-                Swal.fire('Lỗi', 'Không thể kết nối đến máy chủ. Vui lòng thử lại.', 'error');
-            });
+        // Hiển thị loading
+        Swal.fire({ 
+            title: 'Đang xử lý đơn hàng...', 
+            didOpen: () => Swal.showLoading(),
+            allowOutsideClick: false
+        });
 
-        } else if (selectedPaymentMethod === 'qr') {
-            // Logic QR: Hiển thị Modal để thanh toán
-            if (qrModal && modalTotalPriceContainer) {
-                modalTotalPriceContainer.textContent = totalAmount.toLocaleString('vi-VN', { maximumFractionDigits: 0 }) + ' ₫';
-                
-                // 🔥 SỬA: TRUYỀN orderId CỤC BỘ VÀO HÀM generateQRCode
-                generateQRCode(totalAmount, orderId); 
-                
-                qrModal.style.display = 'block';
+        // 🔥 GỌI API VỚI THÔNG TIN KHÁCH HÀNG ĐÃ ĐƯỢC LƯU
+        // (updateCartItem được định nghĩa trong cart_api.js)
+        updateCartItem('checkout_complete', 0, 0, method, info) 
+        .then(data => {
+            Swal.close(); 
+            
+            if (data.success) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Đặt hàng thành công!', 
+                    text: `Mã đơn: #${data.order_code}. Cảm ơn bạn đã ủng hộ!`,
+                    confirmButtonText: 'Xem chi tiết'
+                }).then(() => {
+                    // Chuyển hướng đến trang hoàn tất
+                    window.location.href = `index.php?page=hoantat&order_id=${data.order_id}&code=${data.order_code}&total=${totalAmount}&method=${method}`;
+                });
             } else {
-                Swal.fire('Lỗi', 'Không tìm thấy Modal QR. Vui lòng kiểm tra lại ID HTML.', 'error'); 
+                // Hiển thị lỗi từ Backend 
+                Swal.fire('Lỗi', data.message || 'Có lỗi xảy ra khi tạo đơn hàng.', 'error');
+                if (qrModal) qrModal.style.display = 'none';
             }
-        }
-    });
+        })
+        .catch(error => {
+            Swal.close();
+            Swal.fire('Lỗi kết nối', 'Không thể kết nối đến máy chủ.', 'error');
+        });
+    }
 
-    // --- D. XỬ LÝ SỰ KIỆN MODAL QR CODE ---
-    
-    // 2. Đóng Modal (Giữ nguyên)
+    // --- 4. XỬ LÝ CHỌN PHƯƠNG THỨC THANH TOÁN (Giữ nguyên) ---
+    if (paymentSelection) {
+        paymentSelection.querySelectorAll('.payment-option').forEach(option => {
+            option.addEventListener('click', function() {
+                paymentSelection.querySelectorAll('.payment-option').forEach(el => el.classList.remove('active', 'border-teal-500', 'bg-teal-50'));
+                this.classList.add('active', 'border-teal-500', 'bg-teal-50');
+                selectedPaymentMethod = this.dataset.method;
+                
+                if (selectedPaymentMethod === 'qr') {
+                    finalConfirmBtn.textContent = `Hoàn Tất Đơn Hàng (QR)`;
+                } else {
+                    finalConfirmBtn.textContent = `Hoàn Tất Đơn Hàng (COD)`;
+                }
+            });
+        });
+    }
+
+    // --- 5. BƯỚC 1: NÚT XÁC NHẬN ĐỊA CHỈ ---
+    if (confirmAddressBtn) {
+        confirmAddressBtn.addEventListener('click', function(e) {
+            const name = nameInput ? nameInput.value.trim() : '';
+            const phone = phoneInput ? phoneInput.value.trim() : '';
+            const address = addressInput ? addressInput.value.trim() : '';
+
+            if (name === "" || phone === "" || address === "") {
+                Swal.fire('Thiếu thông tin', 'Vui lòng nhập đầy đủ Tên, SĐT và Địa chỉ.', 'error');
+                return;
+            }
+            
+            // 🔥 LƯU DỮ LIỆU ĐỊA CHỈ ĐÃ XÁC NHẬN
+            confirmedAddressData = { name, phone, address };
+            
+            // TẠO KHỐI TÓM TẮT ĐỊA CHỈ
+            const confirmedSummaryHTML = `
+                <div id="addressSummaryBlock" class="p-4 border rounded-lg bg-green-50 border-green-200 mb-4">
+                    <h3 class="text-green-700 font-bold mb-2">✅ Địa Chỉ Đã Xác Nhận</h3>
+                    <p><strong>Người nhận:</strong> ${name}</p>
+                    <p><strong>SĐT:</strong> ${phone}</p>
+                    <p><strong>Địa chỉ:</strong> ${address}</p>
+                    <button type="button" class="mt-3 text-sm text-blue-600 underline hover:text-blue-800" id="editAddressBtn">Sửa thông tin</button>
+                </div>
+            `;
+            
+            deliveryBlock.style.display = 'none';
+            deliveryBlock.insertAdjacentHTML('beforebegin', confirmedSummaryHTML); 
+            
+            if (paymentBlock) paymentBlock.style.display = 'block'; 
+            if (finalConfirmBtn) finalConfirmBtn.style.display = 'block';
+            
+            Swal.fire({ icon: 'success', title: 'Đã lưu địa chỉ', text: 'Vui lòng chọn phương thức thanh toán.', timer: 1500, showConfirmButton: false });
+            
+            // Sự kiện nút "Sửa địa chỉ"
+            document.getElementById('editAddressBtn').addEventListener('click', function() {
+                document.getElementById('addressSummaryBlock').remove();
+                deliveryBlock.style.display = 'block'; // Hiện lại form nhập liệu
+                paymentBlock.style.display = 'none'; 
+                finalConfirmBtn.style.display = 'none'; 
+                // 🔥 XÓA DỮ LIỆU ĐÃ LƯU KHI NGƯỜI DÙNG QUAY LẠI SỬA
+                confirmedAddressData = null; 
+            });
+        });
+    }
+
+    // --- 6. BƯỚC 2: NÚT HOÀN TẤT (FINAL CONFIRM) ---
+    if (finalConfirmBtn) {
+        finalConfirmBtn.addEventListener('click', function(e) {
+            if (!selectedPaymentMethod) {
+                Swal.fire('Chưa chọn thanh toán', 'Vui lòng chọn Phương thức Thanh toán (COD hoặc QR).', 'warning');
+                return;
+            }
+            // Kiểm tra: Phải có thông tin địa chỉ đã xác nhận
+            if (!confirmedAddressData) {
+                 Swal.fire('Thiếu thông tin', 'Vui lòng xác nhận địa chỉ giao hàng trước.', 'warning');
+                 return;
+            }
+
+            if (selectedPaymentMethod === 'cod') {
+                processCheckout('cod'); // Thanh toán COD, gọi API ngay
+            } else if (selectedPaymentMethod === 'qr') {
+                // Hiển thị Modal QR
+                if (qrModal && modalTotalPriceContainer) {
+                    modalTotalPriceContainer.textContent = totalAmount.toLocaleString('vi-VN') + ' đ';
+                    generateQRCode(totalAmount, 'TEMP' + Math.floor(Math.random() * 1000)); 
+                    qrModal.style.display = 'block';
+                } else {
+                    Swal.fire('Lỗi giao diện', 'Không tìm thấy Modal QR.', 'error'); 
+                }
+            }
+        });
+    }
+
+    // --- 7. XỬ LÝ SỰ KIỆN TRONG MODAL QR ---
     if (closeBtn) {
         closeBtn.addEventListener('click', function() { qrModal.style.display = 'none'; });
     }
-    
-    // Đóng Modal khi click ra ngoài (Giữ nguyên)
+    // Đóng modal khi click ra ngoài
     window.addEventListener('click', function(event) {
         if (event.target === qrModal) { qrModal.style.display = 'none'; }
     });
 
-    // 3. Hoàn tất Thanh toán trong Modal (Nút 'Đã Hoàn Thành Chuyển Khoản')
     if (paymentCompleteBtn) {
-        const method = 'qr';
-        
+        // Nút người dùng nhấn xác nhận đã chuyển khoản
         paymentCompleteBtn.addEventListener('click', function () {
-            
-            Swal.fire({ 
-                title: 'Đang hoàn tất Đơn hàng...', 
-                text: 'Vui lòng chờ xác nhận từ hệ thống.',
-                didOpen: () => { Swal.showLoading() }, 
-                allowOutsideClick: false 
-            });
-
-            // 🔥 SỬA: Thêm tham số 'qr' vào updateCartItem
-            updateCartItem('checkout_complete', 0, 0, method).then(data => {
-                
-                Swal.close(); 
-                
-                if (data.success) {
-                    const finalOrderId = data.order_id || orderId; // Sử dụng ID từ Backend nếu có
-                    
-                    Swal.fire(
-                        'Hoàn tất!', 
-                        `Đơn hàng #${finalOrderId} đã được xác nhận. Cảm ơn bạn đã thanh toán!`, 
-                        'success'
-                    ).then(() => {
-                        // Chuyển hướng với ID nhận được từ Backend (hoặc ID tạm)
-                        const redirectURL = `index.php?page=hoantat&order_id=${finalOrderId}&total=${totalAmount}&method=${method}`;
-                        window.location.href = redirectURL;
-                    });
-                } else {
-                    Swal.fire('Lỗi', data.message || 'Có lỗi xảy ra khi hoàn tất đơn hàng.', 'error');
-                    qrModal.style.display = 'none'; 
-                }
-            }).catch(error => {
-                Swal.close();
-                Swal.fire('Lỗi', 'Không thể kết nối đến máy chủ. Vui lòng thử lại.', 'error');
-                qrModal.style.display = 'none';
-            });
+            processCheckout('qr'); 
         });
     }
-
 });

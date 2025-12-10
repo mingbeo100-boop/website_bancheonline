@@ -1,17 +1,23 @@
 <?php
 // backend/utils.php
-
 // Hàm trả về JSON lỗi và dừng chương trình
-function respondWithError($conn, $message, $http_code = 200) {
-    // Đảm bảo không có output nào trước JSON header
-    header('Content-Type: application/json');
+// 🔥 SỬA: Đổi giá trị mặc định của $http_code từ 200 thành 400 (Bad Request)
+function respondWithError($conn, $message, $http_code = 400) {
+    
+    // Đảm bảo Content-Type đã được đặt ở file Controller (Chúng ta không đặt lại ở đây)
     
     // Chỉ thêm lỗi chi tiết từ DB nếu tồn tại
     if ($conn && $conn->error) {
-        $message .= " Lỗi DB: " . $conn->error;
+        // Ghi log lỗi chi tiết, nhưng không gửi lỗi DB ra ngoài cho người dùng cuối
+        error_log("Lỗi DB chi tiết: " . $conn->error); 
     }
+    
     http_response_code($http_code);
+    
+    // Gửi JSON lỗi cho Frontend
     echo json_encode(['success' => false, 'message' => $message]);
+    
+    // 🔥 QUAN TRỌNG: DỪNG CHƯƠNG TRÌNH NGAY LẬP TỨC
     exit;
 }
 function slugify($text) {
@@ -33,6 +39,4 @@ function slugify($text) {
     return $text;
 }
 
-// ... (Các hàm tiện ích khác) ...
-
-?>
+// KHÔNG CÓ THẺ ĐÓNG PHP Ở CUỐI FILE.

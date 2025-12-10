@@ -72,13 +72,67 @@
         
         <div class="mt-6 text-right">
             <button class="btn-vibrant transition duration-300">
-                <i class="bi bi-arrow-left mr-2"></i> Quay Lại
+                
             </button>
         </div>
 
     </div> </div>
 
 <script src="assets/js/order_list.js"></script>
+<div id="orderDetailModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-3xl overflow-hidden transform transition-all">
+        <div class="bg-[#4db6ac] px-6 py-4 flex justify-between items-center">
+            <h3 class="text-white text-xl font-bold" id="modalOrderTitle">Chi Tiết Đơn Hàng</h3>
+            <button id="closeDetailModal" class="text-white hover:text-gray-200 text-2xl">&times;</button>
+        </div>
+
+        <div class="p-6 max-h-[80vh] overflow-y-auto">
+            <div id="modalLoading" class="text-center py-10 hidden">
+                <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-teal-500 border-t-transparent"></div>
+                <p class="mt-2 text-gray-500">Đang tải dữ liệu...</p>
+            </div>
+
+            <div id="modalContent">
+                <div class="bg-orange-50 border border-orange-200 rounded-md p-4 mb-6">
+                    <h5 class="text-[#cc8400] font-bold mb-2 uppercase text-sm tracking-wide">
+                        <i class="bi bi-geo-alt-fill mr-1"></i> Địa Chỉ Nhận Hàng
+                    </h5>
+                    <div class="text-gray-700 space-y-1">
+                        <p><span class="font-semibold">Người nhận:</span> <span id="detailName">...</span></p>
+                        <p><span class="font-semibold">SĐT:</span> <span id="detailPhone">...</span></p>
+                        <p><span class="font-semibold">Địa chỉ:</span> <span id="detailAddress">...</span></p>
+                    </div>
+                </div>
+
+                <h5 class="font-bold text-gray-700 mb-3">Sản phẩm</h5>
+                <div class="overflow-x-auto border rounded-lg">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="bg-gray-100 text-gray-600 text-sm uppercase">
+                            <tr>
+                                <th class="p-3 border-b">Sản phẩm</th>
+                                <th class="p-3 border-b text-center">SL</th>
+                                <th class="p-3 border-b text-right">Giá</th>
+                                <th class="p-3 border-b text-right">Thành tiền</th>
+                            </tr>
+                        </thead>
+                        <tbody id="detailItemsList" class="text-sm">
+                            </tbody>
+                        <tfoot class="bg-gray-50">
+                            <tr>
+                                <td colspan="3" class="p-3 text-right font-bold text-gray-600">Tổng cộng:</td>
+                                <td class="p-3 text-right font-bold text-red-600 text-lg" id="detailTotal">0 đ</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-gray-50 px-6 py-3 text-right border-t">
+            <button id="closeDetailBtnBottom" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded shadow transition">Đóng</button>
+        </div>
+    </div>
+</div>
 </body>
 </html>
 
@@ -251,4 +305,5 @@
         text-decoration: none;
         box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
     }
+    
 </style>

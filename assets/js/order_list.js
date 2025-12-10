@@ -29,9 +29,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const lowerStatus = status ? status.toLowerCase() : '';
         const dataMap = {
             'pending': { class: 'badge-pending', text: 'Đang chờ', icon: 'bi-hourglass-split' },
-            'processing': { class: 'bg-info text-dark', text: 'Đang xử lý', icon: 'bi-gear-fill' },
+            'processing': { class: 'badge-processing', text: 'Đang xử lý', icon: 'bi-gear-fill' },
             'delivered': { class: 'badge-delivered', text: 'Hoàn thành', icon: 'bi-check-circle-fill' },
-            'cancelled': { class: 'bg-danger text-white', text: 'Đã hủy', icon: 'bi-x-octagon-fill' }
+            'cancelled': { class: 'badge-cancelled', text: 'Đã hủy', icon: 'bi-x-octagon-fill' }
         };
         return dataMap[lowerStatus] || { class: 'bg-secondary', text: 'Không rõ', icon: 'bi-question-circle' };
     }
@@ -149,6 +149,70 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // --- 5. HÀM TẢI ĐƠN HÀNG (Sử dụng order_code cho hiển thị) ---
+    function showOrderDetails(orderId) {
+    Swal.fire({
+        title: 'Đang tải chi tiết...',
+        didOpen: () => Swal.showLoading()
+    });
+
+    fetch(`../backend/get_order_details.php?order_id=${orderId}`)
+        .then(res => res.json())
+        .then(data => {
+            Swal.close();
+            if (!data.success) {
+                Swal.fire('Lỗi', data.error, 'error');
+                return;
+            }
+
+            const o = data.order;
+            const items = data.items;
+
+            // Xây dựng HTML danh sách sản phẩm
+            let itemsHtml = items.map(item => `
+                <tr class="border-b">
+                    <td class="text-left py-2">${item.name}</td>
+                    <td class="text-center">x${item.quantity}</td>
+                    <td class="text-right">${formatCurrency(item.price_at_purchase)}</td>
+                </tr>
+            `).join('');
+
+            const htmlContent = `
+                <div class="text-left text-sm" >
+                    <div class="mb-4 bg-gray-50 p-3 rounded">
+                        <h3 class="font-bold text-teal-700 mb-2 border-b pb-1">📍 Thông Tin Giao Hàng</h3>
+                        <p><strong>Người nhận:</strong> ${o.recipient_name || 'Không có tên'}</p>
+                        <p><strong>SĐT:</strong> ${o.recipient_phone || '---'}</p>
+                        <p><strong>Địa chỉ:</strong> ${o.shipping_address || 'Tại cửa hàng'}</p>
+                        <p class="mt-2"><strong>Thanh toán:</strong> ${o.payment_method}</p>
+                    </div>
+
+                    <h3 class="font-bold text-teal-700 mb-2">🛒 Danh Sách Sản Phẩm</h3>
+                    <table class="w-full mb-3">
+                        <thead class="bg-gray-100 font-bold">
+                            <tr>
+                                <th class="text-left p-2">Sản phẩm</th>
+                                <th class="text-center p-2">SL</th>
+                                <th class="text-right p-2">Giá</th>
+                            </tr>
+                        </thead>
+                        <tbody>${itemsHtml}</tbody>
+                    </table>
+                    
+                    <div class="text-right font-bold text-lg text-red-600 border-t pt-2">
+                        Tổng tiền: ${formatCurrency(o.total_amount)}
+                    </div>
+                </div>
+            `;
+
+            Swal.fire({
+                title: `Chi tiết đơn #${o.order_code || o.order_id}`,
+                html: htmlContent,
+                width: '600px',
+                confirmButtonText: 'Đóng'
+            });
+        })
+        .catch(err => Swal.fire('Lỗi', 'Không thể tải chi tiết.', 'error'));
+}
     function loadOrders(userId) {
         ordersListBody.innerHTML = '<tr><td colspan="5" class="text-center py-5"><div class="inline-block animate-spin rounded-full h-4 w-4 border-2 border-b-transparent border-teal-500 mr-2" role="status"></div> Đang tải đơn hàng...</td></tr>';
 
@@ -186,7 +250,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                      ? 'text-green-600'  
                                      : 'text-red-600';  
                     
-                    // 🔥 LỆNH QUAN TRỌNG: Ưu tiên order_code (AEKH-...), nếu NULL thì dùng order_id (37, 38,...)
+               
                     const rawCode = order.order_code || order.order_id;
                     const displayCode = `#${rawCode}`;
                     
@@ -224,12 +288,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
                     // Gán sự kiện cho nút "Xem" (Dùng mã tùy chỉnh để hiển thị)
                     row.querySelector('.btn-view-detail').addEventListener('click', function() {
-                        Swal.fire({
-                            title: `Chi tiết Đơn hàng #${displayCode}`,
-                            text: `Logic xem chi tiết đơn hàng ${displayCode} sẽ được thêm tại đây!`,
-                            icon: 'info',
-                            confirmButtonText: 'Đóng'
-                        });
+    const id = this.dataset.orderId;
+    showOrderDetails(id);
                     });
                 });
             } else {
@@ -245,3 +305,4 @@ document.addEventListener('DOMContentLoaded', function() {
     // Bắt đầu tải dữ liệu
     loadOrders(CURRENT_USER_ID);
 });
+
