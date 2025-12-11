@@ -122,7 +122,7 @@ function getImagePathByName(productName) {
                 let newQuantity = btn.classList.contains('increase') ? currentQuantity + 1 : currentQuantity - 1;
 
                 const promise = (newQuantity < 1) 
-                    ? updateCartItem('remove_item', productId) 
+                    ? updateCartItem('remove_item', productId,0) 
                     : updateCartItem('update_quantity', productId, newQuantity);
 
                 promise.then(data => {

@@ -149,7 +149,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // --- 5. HÀM TẢI ĐƠN HÀNG (Sử dụng order_code cho hiển thị) ---
-    function showOrderDetails(orderId) {
+   function showOrderDetails(orderId) {
     Swal.fire({
         title: 'Đang tải chi tiết...',
         didOpen: () => Swal.showLoading()
@@ -169,46 +169,78 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // Xây dựng HTML danh sách sản phẩm
             let itemsHtml = items.map(item => `
-                <tr class="border-b">
-                    <td class="text-left py-2">${item.name}</td>
-                    <td class="text-center">x${item.quantity}</td>
-                    <td class="text-right">${formatCurrency(item.price_at_purchase)}</td>
+                <tr class="hover:bg-gray-50">
+                    <td class="p-3 text-left">${item.product_name || item.name}</td>
+                    <td class="p-3 text-center">x${item.quantity}</td>
+                    <td class="p-3 text-right">${formatCurrency(item.price_at_purchase)}</td>
                 </tr>
             `).join('');
 
+            // CẤU TRÚC FLEXBOX MỚI ĐỂ CỐ ĐỊNH CÁC PHẦN
             const htmlContent = `
-                <div class="text-left text-sm" >
-                    <div class="mb-4 bg-gray-50 p-3 rounded">
-                        <h3 class="font-bold text-teal-700 mb-2 border-b pb-1">📍 Thông Tin Giao Hàng</h3>
-                        <p><strong>Người nhận:</strong> ${o.recipient_name || 'Không có tên'}</p>
-                        <p><strong>SĐT:</strong> ${o.recipient_phone || '---'}</p>
-                        <p><strong>Địa chỉ:</strong> ${o.shipping_address || 'Tại cửa hàng'}</p>
-                        <p class="mt-2"><strong>Thanh toán:</strong> ${o.payment_method}</p>
-                    </div>
-
-                    <h3 class="font-bold text-teal-700 mb-2">🛒 Danh Sách Sản Phẩm</h3>
-                    <table class="w-full mb-3">
-                        <thead class="bg-gray-100 font-bold">
-                            <tr>
-                                <th class="text-left p-2">Sản phẩm</th>
-                                <th class="text-center p-2">SL</th>
-                                <th class="text-right p-2">Giá</th>
-                            </tr>
-                        </thead>
-                        <tbody>${itemsHtml}</tbody>
-                    </table>
+                <div class="text-left text-gray-700 space-y-4">
                     
-                    <div class="text-right font-bold text-lg text-red-600 border-t pt-2">
+                   <div class="bg-teal-50 border border-teal-200 rounded-lg p-4 shadow-sm text-sm flex-shrink-0">
+    <h5 class="text-teal-800 font-extrabold mb-3 uppercase text-xs tracking-wider border-b border-teal-300 pb-1">
+        📍 THÔNG TIN GIAO HÀNG
+    </h5>
+    
+    <div class="text-gray-700 space-y-1 leading-relaxed">
+        <p>
+            <span class="font-bold text-gray-800">Người nhận:</span> 
+            <span class="text-gray-900">${o.recipient_name || 'Không có tên'}</span>
+        </p>
+        <p>
+            <span class="font-bold text-gray-800">SĐT:</span> 
+            <span class="text-gray-900">${o.phone || o.recipient_phone || '---'}</span>
+        </p>
+        <p>
+            <span class="font-bold text-gray-800">Địa chỉ:</span> 
+            <span class="text-gray-900">${o.address || o.shipping_address || 'Tại cửa hàng'}</span>
+        </p>
+        <p class="pt-1">
+            <span class="font-bold text-gray-800">Thanh toán:</span> 
+            <span class="text-blue-700 font-semibold">${o.payment_method}</span>
+        </p>
+    </div>
+</div>
+
+                    <h5 class="font-bold text-gray-700 text-base flex-shrink-0">🛒 Danh sách Sản phẩm</h5>
+                    
+                    <div class="scrollable-items-container">
+                        <table class="w-full text-left border-collapse">
+                            <thead class="bg-gray-100 text-gray-600 text-sm uppercase sticky top-0 z-10 shadow-sm">
+                                <tr>
+                                    <th class="p-3">Sản phẩm</th>
+                                    <th class="p-3 text-center">SL</th>
+                                    <th class="p-3 text-right">Giá</th>
+                                </tr>
+                            </thead>
+                            <tbody class="text-sm divide-y divide-gray-100">${itemsHtml}</tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="text-right font-extrabold text-black text-xl pt-2 flex-shrink-0">
                         Tổng tiền: ${formatCurrency(o.total_amount)}
                     </div>
                 </div>
             `;
 
             Swal.fire({
-                title: `Chi tiết đơn #${o.order_code || o.order_id}`,
+                title: `<span class="text-3xl font-extrabold text-black">Chi tiết đơn  #${o.order_code || o.order_id}</span>`,
                 html: htmlContent,
-                width: '600px',
-                confirmButtonText: 'Đóng'
+                width: '650px',
+                showConfirmButton: true,
+                confirmButtonText: 'Đóng',
+                
+                padding: '0', 
+                customClass: {
+                    title: 'swal2-title', // Vẫn dùng title để áp dụng CSS ẩn
+                    popup: 'rounded-xl shadow-2xl',
+                    confirmButton: 'bg-teal-600 hover:bg-teal-700 text-white' 
+                },
+                buttonsStyling: true, 
+                confirmButtonColor: '#4db6ac'
             });
         })
         .catch(err => Swal.fire('Lỗi', 'Không thể tải chi tiết.', 'error'));
