@@ -16,15 +16,13 @@ function updateCartItem(action, productId, quantity = 0, method = null, customer
     let body = `action=${action}`; // Bắt đầu body với action
 
     // --- 1. XỬ LÝ CÁC HÀNH ĐỘNG CƠ BẢN TRONG GIỎ HÀNG ---
-  // --- 1. XỬ LÝ CÁC HÀNH ĐỘNG CƠ BẢN TRONG GIỎ HÀNG ---
-if (action === 'add' || action === 'remove' || action === 'remove_item' || action === 'update_quantity') {
-   
-    body += `&product_id=${productId}`; 
+    if (action === 'add' || action === 'remove' || action === 'update_quantity') {
+        body += `&product_id=${productId}`;
 
-    if (action === 'update_quantity') {
-        body += `&quantity=${quantity}`;
+        if (action === 'update_quantity') {
+            body += `&quantity=${quantity}`;
+        }
     }
-}
     
     // --- 2. XỬ LÝ HOÀN TẤT ĐƠN HÀNG (CHECKOUT) ---
     if (action === 'checkout_complete') {

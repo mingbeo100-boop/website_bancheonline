@@ -1,4 +1,9 @@
-
+/**
+ * Tệp JavaScript xử lý Checkout và Thanh toán
+ * Vị trí: assets/js/order_detail_logic.js
+ * Logic: Lưu thông tin địa chỉ vào biến confirmedAddressData 
+ * và sử dụng biến này khi gọi processCheckout.
+ */
 
 // --- 1. HÀM TẠO QR CODE ---
 function generateQRCode(amount, currentOrderId) { 
