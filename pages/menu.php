@@ -1,4 +1,6 @@
-<div id="menu-container-1" class="container text-center">
+<h1 class="text-center my-4 p-3" style="width: fit-content; margin: auto;">Menu của quán chúng mình!</h1>
+    <!-----------------------------MENU QUÁN-------------------------------------->
+    <div id="menu" class="container text-center">
         <div class="row mt-4">
             <div class="col">
                 <div class="product-card" data-product-id="101">
@@ -52,7 +54,7 @@
                     <strong>Chè Thái Hoa Quả</strong>
                     <p>Chè Thái</p>
                     <p class="price">29.000 ₫</p>
-                    <div class="overlay">
+<div class="overlay">
                         <p class="detail">Thưởng thức vị ngọt mát của hoa quả tươi cùng nước cốt dừa.</p>
                         <button class="add-to-cart"
                             onclick="addToCart('104', 'Chè Thái Hoa Quả')">THÊM VÀO GIỎ</button>
@@ -110,7 +112,7 @@
                 <div class="product-card" data-product-id="108">
                     <img src="./assets/images/menu/dua-dam-thai.png" alt="2" class="img-sanpham">
                     <strong>Dừa Dầm Thái</strong>
-                    <p>Chè Thái</p>
+<p>Chè Thái</p>
                     <p class="price">30.000 ₫</p>
                     <div class="overlay">
                         <p class="detail">Chè Thái với dừa dầm tươi, vị ngọt thanh mát tự nhiên.</p>
@@ -169,7 +171,7 @@
             <div class="col">
                 <div class="product-card" data-product-id="204">
                     <img src="./assets/images/menu/sua-chua-thach-oc-que.png" alt="3" class="img-sanpham">
-                    <strong>Sữa Chua Thạch Ốc Quế</strong>
+<strong>Sữa Chua Thạch Ốc Quế</strong>
                     <p>Sữa Chua</p>
                     <p class="price">25.000 ₫</p>
                     <div class="overlay">
@@ -211,7 +213,7 @@
                     </div>
                 </div>
             </div>
-            
-            <div class="col"></div> 
+
+            <div class="col"></div>
         </div>
     </div>

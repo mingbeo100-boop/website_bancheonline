@@ -77,7 +77,8 @@
             </button>
         </div>
 
-    </div> </div>
+    </div> 
+</div>
 
 <script src="assets/js/order_list.js"></script>
 <div id="orderDetailModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden items-center justify-center z-50 p-4">
@@ -132,8 +133,9 @@
         <div class="bg-gray-50 px-6 py-3 text-right border-t">
             <button id="closeDetailBtnBottom" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded shadow transition">Đóng</button>
         </div>
-    </div>
 </div>
+</div>
+
 </body>
 </html>
 

@@ -101,6 +101,8 @@ if (isset($_SESSION['username']) && in_array($_SESSION['username'], $admin_users
             include 'pages/hoantat.php';
         } elseif ($page == 'orders') { 
             include 'pages/orders.php';
+        } elseif ($page == 'lienhe') { 
+            include 'pages/lienhe.php';
         } else {
             include 'pages/home.php'; // Trang mặc định nếu page không hợp lệ
         }
@@ -135,7 +137,7 @@ if (isset($_SESSION['username']) && in_array($_SESSION['username'], $admin_users
 
         <div class="footer-bottom">
             <nav class="footer-nav">
-                <a href="#">VỀ CHÚNG TÔI</a>
+                <a href="index.php?page=about_us">VỀ CHÚNG TÔI</a>
                 <a href="#">MENU</a>
                 <a href="#">CỬA HÀNG</a>
                 <a href="#">TIN TỨC</a>
